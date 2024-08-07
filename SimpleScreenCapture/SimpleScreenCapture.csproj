@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-    <PackageReference Include="EleCho.WpfSuite" Version="0.6.2" />
+    <PackageReference Include="EleCho.WpfSuite" Version="0.6.3" />
     <PackageReference Include="SkiaSharp" Version="2.88.8" />
   </ItemGroup>
 

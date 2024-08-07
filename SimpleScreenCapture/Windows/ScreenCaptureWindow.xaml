@@ -7,10 +7,8 @@
         xmlns:ws="https://schemas.elecho.dev/wpfsuite"
         mc:Ignorable="d"
         Loaded="Window_Loaded"
-        WindowState="Maximized"
-        WindowStyle="None"
-        Topmost="True"
         PreviewKeyDown="Window_PreviewKeyDown"
+        Background="Black"
         Title="ScreenCaptureWindow" Height="450" Width="800"
         d:DataContext="{d:DesignInstance Type=local:ScreenCaptureWindow}">
     <Window.Resources>
@@ -21,6 +19,10 @@
         <ws:SubtractNumberConverter Other="5" x:Key="Substract5Converter"/>
         <ws:AddNumberConverter Other="10" x:Key="Add10Converter"/>
     </Window.Resources>
+
+    <!--<Window.Background>
+        
+    </Window.Background>-->
 
     <Grid>
         <Image Source="{Binding ScreenBitmap}"/>
@@ -33,12 +35,14 @@
             <TextBlock Text="{Binding AreaBottom}"/>
             <TextBlock Text="{Binding MouseX}"/>
             <TextBlock Text="{Binding MouseY}"/>
+            <TextBlock Text="{Binding OverlayText}"/>
         </StackPanel>
         <Canvas Name="rootCanvas"
                 MouseDown="AreaMouseDown"
                 MouseMove="AreaMouseMove"
                 MouseUp="AreaMouseUp"
-                Background="Transparent">
+                Background="Transparent"
+                Cursor="{Binding MouseCursor}">
             <Rectangle Canvas.Left="0"
                        Canvas.Top="0"
                        Width="{Binding AreaLeft}"
@@ -78,10 +82,10 @@
                               Height="{Binding AreaHeight}"/>
 
             <FrameworkElement Name="toolbarPlacementTarget"
-                              Canvas.Left="{Binding AreaLeft,Converter={StaticResource Substract5Converter}}"
-                              Canvas.Top="{Binding AreaTop,Converter={StaticResource Substract5Converter}}"
-                              Width="{Binding AreaWidth,Converter={StaticResource Add10Converter}}"
-                              Height="{Binding AreaHeight,Converter={StaticResource Add10Converter}}"/>
+                              Canvas.Left="{Binding ToolbarPlacementTargetLeft}"
+                              Canvas.Top="{Binding ToolbarPlacementTargetTop}"
+                              Width="{Binding ToolbarPlacementTargetWidth}"
+                              Height="{Binding ToolbarPlacementTargetHeight}"/>
 
             <FrameworkElement Name="mousePosition"
                               Canvas.Left="{Binding MouseX,Converter={StaticResource Substract5Converter}}"
@@ -89,7 +93,7 @@
                               Width="10"
                               Height="10"/>
 
-            <ws:Popup Name="followMousePopup"
+            <!--<ws:Popup Name="followMousePopup"
                       AllowsTransparency="True"
                       PlacementTarget="{Binding ElementName=mousePosition}"
                       Placement="Bottom"
@@ -102,37 +106,41 @@
                         Height="100">
 
                 </Border>
-            </ws:Popup>
+            </ws:Popup>-->
 
             <ws:Popup Name="toolbarPopup"
                       PlacementTarget="{Binding ElementName=toolbarPlacementTarget}"
                       Placement="Bottom"
                       AutoReposition="True"
                       IsOpen="{Binding AreaSelected}">
-                
-                <StackPanel Orientation="Horizontal">
-                    <StackPanel.Resources>
-                        <Style TargetType="{x:Type ws:Button}">
-                            <Setter Property="Width" Value="30"/>
-                            <Setter Property="Height" Value="30"/>
-                            <Setter Property="BorderThickness" Value="0"/>
-                            
-                            <Setter Property="Background" Value="White"/>
-                            <Setter Property="HoverBackground" Value="Gray"/>
-                            <Setter Property="PressedBackground" Value="#666666"/>
-                        </Style>
-                    </StackPanel.Resources>
-                    
-                    <ws:Button Content="Test"/>
-                    <ws:Button Content="Test"/>
-                    <ws:Button Content="Test"/>
-                    <ws:Button Content="Test"/>
-                    <ws:Button Content="Test"/>
-                    <ws:Button Content="Test"/>
-                    <ws:Button Content="Test"/>
-                    <ws:Button Content="Test"/>
-                    <ws:Button Content="Test"/>
-                </StackPanel>
+
+                <Border BorderThickness="1"
+                        BorderBrush="#2080f0">
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel.Resources>
+                            <Style TargetType="{x:Type ws:ToggleButton}">
+                                <Setter Property="Width" Value="30"/>
+                                <Setter Property="Height" Value="30"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+
+                                <Setter Property="Background" Value="White"/>
+                                <Setter Property="HoverBackground" Value="#d4d4d4"/>
+                                <Setter Property="PressedBackground" Value="#a0a0a0"/>
+                                <Setter Property="HighlightBrush" Value="#2080f0"/>
+                            </Style>
+                        </StackPanel.Resources>
+
+                        <ws:ToggleButton Content="Test"/>
+                        <ws:ToggleButton Content="Test"/>
+                        <ws:ToggleButton Content="Test"/>
+                        <ws:ToggleButton Content="Test"/>
+                        <ws:ToggleButton Content="Test"/>
+                        <ws:ToggleButton Content="Test"/>
+                        <ws:ToggleButton Content="Test"/>
+                        <ws:ToggleButton Content="Test"/>
+                        <ws:ToggleButton Content="Test"/>
+                    </StackPanel>
+                </Border>
             </ws:Popup>
         </Canvas>
     </Grid>
