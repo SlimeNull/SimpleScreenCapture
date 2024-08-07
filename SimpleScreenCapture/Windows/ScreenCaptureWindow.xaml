@@ -1,0 +1,139 @@
+﻿<Window x:Class="LibSimpleScreenCapture.Windows.ScreenCaptureWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:LibSimpleScreenCapture.Windows"
+        xmlns:ws="https://schemas.elecho.dev/wpfsuite"
+        mc:Ignorable="d"
+        Loaded="Window_Loaded"
+        WindowState="Maximized"
+        WindowStyle="None"
+        Topmost="True"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        Title="ScreenCaptureWindow" Height="450" Width="800"
+        d:DataContext="{d:DesignInstance Type=local:ScreenCaptureWindow}">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <ws:SubtractNumberConverter Other="2" x:Key="Substract2Converter"/>
+        <ws:AddNumberConverter Other="4" x:Key="Add4Converter"/>
+
+        <ws:SubtractNumberConverter Other="5" x:Key="Substract5Converter"/>
+        <ws:AddNumberConverter Other="10" x:Key="Add10Converter"/>
+    </Window.Resources>
+
+    <Grid>
+        <Image Source="{Binding ScreenBitmap}"/>
+        <StackPanel>
+            <TextBlock Text="{Binding AreaLeft}"/>
+            <TextBlock Text="{Binding AreaTop}"/>
+            <TextBlock Text="{Binding AreaWidth}"/>
+            <TextBlock Text="{Binding AreaHeight}"/>
+            <TextBlock Text="{Binding AreaRight}"/>
+            <TextBlock Text="{Binding AreaBottom}"/>
+            <TextBlock Text="{Binding MouseX}"/>
+            <TextBlock Text="{Binding MouseY}"/>
+        </StackPanel>
+        <Canvas Name="rootCanvas"
+                MouseDown="AreaMouseDown"
+                MouseMove="AreaMouseMove"
+                MouseUp="AreaMouseUp"
+                Background="Transparent">
+            <Rectangle Canvas.Left="0"
+                       Canvas.Top="0"
+                       Width="{Binding AreaLeft}"
+                       Height="{Binding ElementName=rootCanvas,Path=ActualHeight}"
+                       d:Width="100"
+                       d:Height="100"
+                       Fill="#88000000"/>
+            <Rectangle Canvas.Right="0"
+                       Canvas.Top="0"
+                       Width="{Binding AreaRight}"
+                       Height="{Binding ElementName=rootCanvas,Path=ActualHeight}"
+                       d:Width="100"
+                       d:Height="100"
+                       Fill="#88000000"/>
+            <Rectangle Canvas.Top="0"
+                       Canvas.Left="{Binding AreaLeft}"
+                       Width="{Binding AreaWidth}"
+                       Height="{Binding AreaTop}"
+                       Fill="#88000000"/>
+            <Rectangle Canvas.Bottom="0"
+                       Canvas.Left="{Binding AreaLeft}"
+                       Width="{Binding AreaWidth}"
+                       Height="{Binding AreaBottom}"
+                       Fill="#88000000"/>
+
+            <Border Canvas.Left="{Binding AreaLeft,Converter={StaticResource Substract2Converter}}"
+                    Canvas.Top="{Binding AreaTop,Converter={StaticResource Substract2Converter}}"
+                    Width="{Binding AreaWidth,Converter={StaticResource Add4Converter}}"
+                    Height="{Binding AreaHeight,Converter={StaticResource Add4Converter}}"
+                    BorderThickness="2"
+                    BorderBrush="#2080f0"/>
+
+            <FrameworkElement Name="captureArea"
+                              Canvas.Left="{Binding AreaLeft}"
+                              Canvas.Top="{Binding AreaTop}"
+                              Width="{Binding AreaWidth}"
+                              Height="{Binding AreaHeight}"/>
+
+            <FrameworkElement Name="toolbarPlacementTarget"
+                              Canvas.Left="{Binding AreaLeft,Converter={StaticResource Substract5Converter}}"
+                              Canvas.Top="{Binding AreaTop,Converter={StaticResource Substract5Converter}}"
+                              Width="{Binding AreaWidth,Converter={StaticResource Add10Converter}}"
+                              Height="{Binding AreaHeight,Converter={StaticResource Add10Converter}}"/>
+
+            <FrameworkElement Name="mousePosition"
+                              Canvas.Left="{Binding MouseX,Converter={StaticResource Substract5Converter}}"
+                              Canvas.Top="{Binding MouseY,Converter={StaticResource Substract5Converter}}"
+                              Width="10"
+                              Height="10"/>
+
+            <ws:Popup Name="followMousePopup"
+                      AllowsTransparency="True"
+                      PlacementTarget="{Binding ElementName=mousePosition}"
+                      Placement="Bottom"
+                      AutoReposition="True"
+                      IsOpen="True"
+                      PreviewMouseMove="followMousePopup_PreviewMouseMove">
+                <Border BorderThickness="2"
+                        BorderBrush="#2080f0"
+                        Width="100"
+                        Height="100">
+
+                </Border>
+            </ws:Popup>
+
+            <ws:Popup Name="toolbarPopup"
+                      PlacementTarget="{Binding ElementName=toolbarPlacementTarget}"
+                      Placement="Bottom"
+                      AutoReposition="True"
+                      IsOpen="{Binding AreaSelected}">
+                
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel.Resources>
+                        <Style TargetType="{x:Type ws:Button}">
+                            <Setter Property="Width" Value="30"/>
+                            <Setter Property="Height" Value="30"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            
+                            <Setter Property="Background" Value="White"/>
+                            <Setter Property="HoverBackground" Value="Gray"/>
+                            <Setter Property="PressedBackground" Value="#666666"/>
+                        </Style>
+                    </StackPanel.Resources>
+                    
+                    <ws:Button Content="Test"/>
+                    <ws:Button Content="Test"/>
+                    <ws:Button Content="Test"/>
+                    <ws:Button Content="Test"/>
+                    <ws:Button Content="Test"/>
+                    <ws:Button Content="Test"/>
+                    <ws:Button Content="Test"/>
+                    <ws:Button Content="Test"/>
+                    <ws:Button Content="Test"/>
+                </StackPanel>
+            </ws:Popup>
+        </Canvas>
+    </Grid>
+</Window>
