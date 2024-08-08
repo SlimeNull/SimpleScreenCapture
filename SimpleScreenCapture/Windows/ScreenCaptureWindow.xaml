@@ -23,7 +23,7 @@
         <ws:SubtractNumberConverter Other="5" x:Key="Substract5Converter"/>
         <ws:AddNumberConverter Other="10" x:Key="Add10Converter"/>
 
-        <FontFamily x:Key="iconFont">Pack://application:,,,;/Assets/#Segoe Fluent Icons</FontFamily>
+        <FontFamily x:Key="iconFont">pack://application:,,,/Assets/#Segoe Fluent Icons</FontFamily>
     </Window.Resources>
 
     <Grid>
@@ -116,7 +116,8 @@
                       IsOpen="{Binding AreaSelected}"
                       CustomPopupPlacementCallback="{Binding ToolbarPopupPlacementCallback}">
 
-                <Border BorderThickness="1"
+                <Border Background="White"
+                        BorderThickness="1"
                         BorderBrush="#2080f0">
                     <StackPanel Orientation="Horizontal">
                         <StackPanel.Resources>
@@ -124,26 +125,58 @@
                                 <Setter Property="Width" Value="30"/>
                                 <Setter Property="Height" Value="30"/>
                                 <Setter Property="BorderThickness" Value="0"/>
-                                <Setter Property="FontFamily" Value="{StaticResource iconFont}"/>
+                                <Setter Property="FontFamily" Value="Segoe Fluent Icons"/>
+                                <Setter Property="FontSize" Value="16"/>
 
                                 <Setter Property="Background" Value="White"/>
                                 <Setter Property="HoverBackground" Value="#d4d4d4"/>
                                 <Setter Property="PressedBackground" Value="#a0a0a0"/>
-                                <Setter Property="HighlightBrush" Value="#2080f0"/>
+                                <Setter Property="CheckedBackground" Value="#2080f0"/>
+                            </Style>
+                            <Style TargetType="{x:Type ws:Button}">
+                                <Setter Property="Width" Value="30"/>
+                                <Setter Property="Height" Value="30"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="FontFamily" Value="Segoe Fluent Icons"/>
+                                <Setter Property="FontSize" Value="16"/>
+
+                                <Setter Property="Background" Value="White"/>
+                                <Setter Property="HoverBackground" Value="#d4d4d4"/>
+                                <Setter Property="PressedBackground" Value="#a0a0a0"/>
                             </Style>
                         </StackPanel.Resources>
 
-                        <ws:ToggleButton Content="Test"/>
-                        <ws:ToggleButton Content="Test"/>
-                        <ws:ToggleButton Content="Test"/>
-                        <ws:ToggleButton Content="Test"/>
-                        <ws:ToggleButton Content="Test"/>
-                        <ws:ToggleButton Content="Test"/>
-                        <ws:ToggleButton Content="Test"/>
-                        <ws:ToggleButton Content="Test"/>
-                        <ws:ToggleButton>
-                            <TextBlock FontFamily="{StaticResource iconFont}" Text="&#xE8FB;"/>
-                        </ws:ToggleButton>
+                        <ws:ToggleButton Content="&#xE97C;"/>
+                        <ws:ToggleButton Content="&#xEBE7;"/>
+                        <ws:ToggleButton Content="&#xED63;"/>
+                        <ws:ToggleButton Content="&#xED64;"/>
+                        <ws:ToggleButton Content="?"/>
+                        <ws:ToggleButton Content="&#xE97E;"/>
+                        <ws:ToggleButton Content="&#xED60;"/>
+
+                        <Border Background="White"
+                                VerticalAlignment="Stretch">
+                            <Rectangle Width="1"
+                                       Height="16"
+                                       Fill="#858585" Margin="3"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        
+                        <ws:Button Content="&#xE7A7;" />  <!--undo-->
+                        <ws:Button Content="&#xE7A6;" />  <!--redo-->
+                        
+                        <Border Background="White"
+                                VerticalAlignment="Stretch">
+                            <Rectangle Width="1"
+                                       Height="16"
+                                       Fill="#858585" Margin="3"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        
+                        <ws:Button Content="&#xE711;" Command="{Binding CancelCommand}"/>
+                        <ws:Button Content="&#xE718;"/>
+                        <ws:Button Content="&#xE74E;" Command="{Binding AcceptAndSaveToFileCommand}"/>
+                        <ws:Button Content="&#xE8C8;" Command="{Binding AcceptAndCopyToClipboardCommand}"/>
                     </StackPanel>
                 </Border>
             </ws:Popup>
