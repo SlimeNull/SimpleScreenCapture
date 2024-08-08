@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -14,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using LibScreenCapture;
 using SkiaSharp;
 
@@ -25,8 +27,9 @@ namespace LibSimpleScreenCapture.Windows
     [ObservableObject]
     public partial class ScreenCaptureWindow : Window
     {
+        private readonly double _dpiScale;
         private readonly Stream _destination;
-        IScreenCapture _screenCapture;
+        private readonly IScreenCapture _screenCapture;
 
         private Action<System.Windows.Controls.Primitives.Popup> repositionPopupAction = (Action<System.Windows.Controls.Primitives.Popup>)typeof(System.Windows.Controls.Primitives.Popup)
             .GetMethod("Reposition", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
@@ -44,9 +47,29 @@ namespace LibSimpleScreenCapture.Windows
             var writeableBitmap = new WriteableBitmap(_screenCapture.ScreenWidth, _screenCapture.ScreenHeight, _screenCapture.DpiX, _screenCapture.DpiY, PixelFormats.Pbgra32, null);
             writeableBitmap.WritePixels(new Int32Rect(0, 0, _screenCapture.ScreenWidth, _screenCapture.ScreenHeight), _screenCapture.DataPointer, _screenCapture.Stride * _screenCapture.ScreenHeight, _screenCapture.Stride);
 
+            var primaryScreen = ScreenInfo.GetScreen(0);
+
             ScreenBitmap = writeableBitmap;
             //ScreenBitmap.Freeze();
             _destination = destination;
+            _dpiScale = primaryScreen.DpiY / 96.0;
+
+            ToolbarPopupPlacementCallback = (popupSize, targetSize, offset) =>
+            {
+                var point = new Point(targetSize.Width - popupSize.Width, targetSize.Height + 5);
+
+                if (point.Y / _dpiScale + AreaTop + popupSize.Height > rootCanvas.ActualHeight)
+                {
+                    point.Y = -popupSize.Height - 5;
+
+                    if (point.Y / _dpiScale + AreaTop < 0)
+                    {
+                        point.Y = targetSize.Height - popupSize.Height - 5;
+                    }
+                }
+
+                return [new CustomPopupPlacement(point, PopupPrimaryAxis.None)];
+            };
 
             InitializeComponent();
         }
@@ -65,26 +88,18 @@ namespace LibSimpleScreenCapture.Windows
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(AreaRight))]
-        [NotifyPropertyChangedFor(nameof(ToolbarPlacementTargetLeft))]
-        [NotifyPropertyChangedFor(nameof(ToolbarPlacementTargetWidth))]
         private double _areaLeft;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(AreaBottom))]
-        [NotifyPropertyChangedFor(nameof(ToolbarPlacementTargetTop))]
-        [NotifyPropertyChangedFor(nameof(ToolbarPlacementTargetHeight))]
         private double _areaTop;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(AreaRight))]
-        [NotifyPropertyChangedFor(nameof(ToolbarPlacementTargetLeft))]
-        [NotifyPropertyChangedFor(nameof(ToolbarPlacementTargetWidth))]
         private double _areaWidth;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(AreaBottom))]
-        [NotifyPropertyChangedFor(nameof(ToolbarPlacementTargetTop))]
-        [NotifyPropertyChangedFor(nameof(ToolbarPlacementTargetHeight))]
         private double _areaHeight;
 
         [ObservableProperty]
@@ -100,11 +115,6 @@ namespace LibSimpleScreenCapture.Windows
         public double AreaBottom => (rootCanvas?.ActualHeight ?? 0) - AreaTop - AreaHeight;
 
         public double ToolbarPlacementScreenPadding => 35;
-
-        public double ToolbarPlacementTargetLeft => Math.Max(ToolbarPlacementScreenPadding, AreaLeft);
-        public double ToolbarPlacementTargetTop => Math.Max(ToolbarPlacementScreenPadding, AreaTop - 5);
-        public double ToolbarPlacementTargetWidth => Math.Max(Math.Min(rootCanvas.ActualWidth - ToolbarPlacementScreenPadding, AreaLeft + AreaWidth) - ToolbarPlacementTargetLeft, 0);
-        public double ToolbarPlacementTargetHeight => Math.Max(Math.Min(rootCanvas.ActualHeight - ToolbarPlacementScreenPadding, AreaTop + AreaHeight + 10) - ToolbarPlacementTargetTop, 0);
 
         public Cursor MouseCursor
         {
@@ -289,31 +299,45 @@ namespace LibSimpleScreenCapture.Windows
         {
             if (e.Key is Key.Escape)
             {
-                DialogResult = false;
-                Close();
+                Cancel();
             }
             else if (e.Key is Key.Enter)
             {
-                var normalizedAreaX = AreaLeft / rootCanvas.ActualWidth;
-                var normalizedAreaY = AreaTop / rootCanvas.ActualHeight;
-                var normalizedAreaWidth = AreaWidth / rootCanvas.ActualWidth;
-                var normalizedAreaHeight = AreaHeight / rootCanvas.ActualHeight;
-
-                var pixelAreaX = (int)(ScreenBitmap.PixelWidth * normalizedAreaX);
-                var pixelAreaY = (int)(ScreenBitmap.PixelHeight * normalizedAreaY);
-                var pixelAreaWidth = (int)(ScreenBitmap.PixelWidth * normalizedAreaWidth);
-                var pixelAreaHeight = (int)(ScreenBitmap.PixelHeight * normalizedAreaHeight);
-
-                using var screenImage = SKImage.FromPixels(new SKImageInfo(ScreenBitmap.PixelWidth, ScreenBitmap.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul), ScreenBitmap.BackBuffer, ScreenBitmap.BackBufferStride);
-                using var captureBitmap = new SKBitmap(pixelAreaWidth, pixelAreaHeight);
-                using var captureCanvas = new SKCanvas(captureBitmap);
-
-                captureCanvas.DrawImage(screenImage, new SKPoint(-pixelAreaX, -pixelAreaY));
-                captureBitmap.Encode(_destination, SKEncodedImageFormat.Png, 100);
-
-                DialogResult = true;
-                Close();
+                AcceptCopyToClipboard();
             }
+        }
+
+        public CustomPopupPlacementCallback ToolbarPopupPlacementCallback { get; }
+
+        [RelayCommand]
+        public void Cancel()
+        {
+            DialogResult = false;
+            Close();
+        }
+
+        [RelayCommand]
+        public void AcceptCopyToClipboard()
+        {
+            var normalizedAreaX = AreaLeft / rootCanvas.ActualWidth;
+            var normalizedAreaY = AreaTop / rootCanvas.ActualHeight;
+            var normalizedAreaWidth = AreaWidth / rootCanvas.ActualWidth;
+            var normalizedAreaHeight = AreaHeight / rootCanvas.ActualHeight;
+
+            var pixelAreaX = (int)(ScreenBitmap.PixelWidth * normalizedAreaX);
+            var pixelAreaY = (int)(ScreenBitmap.PixelHeight * normalizedAreaY);
+            var pixelAreaWidth = (int)(ScreenBitmap.PixelWidth * normalizedAreaWidth);
+            var pixelAreaHeight = (int)(ScreenBitmap.PixelHeight * normalizedAreaHeight);
+
+            using var screenImage = SKImage.FromPixels(new SKImageInfo(ScreenBitmap.PixelWidth, ScreenBitmap.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul), ScreenBitmap.BackBuffer, ScreenBitmap.BackBufferStride);
+            using var captureBitmap = new SKBitmap(pixelAreaWidth, pixelAreaHeight);
+            using var captureCanvas = new SKCanvas(captureBitmap);
+
+            captureCanvas.DrawImage(screenImage, new SKPoint(-pixelAreaX, -pixelAreaY));
+            captureBitmap.Encode(_destination, SKEncodedImageFormat.Png, 100);
+
+            DialogResult = true;
+            Close();
         }
 
         [Flags]

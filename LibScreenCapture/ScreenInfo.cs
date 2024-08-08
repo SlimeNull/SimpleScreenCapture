@@ -12,6 +12,43 @@ namespace LibScreenCapture
             return PInvoke.GetSystemMetrics(Windows.Win32.UI.WindowsAndMessaging.SYSTEM_METRICS_INDEX.SM_CMONITORS);
         }
 
+        public static unsafe ScreenInfo GetScreen(int index)
+        {
+            var screenCount = GetScreenCount();
+
+            var desktopWindow = PInvoke.GetDesktopWindow();
+            var hdc = PInvoke.GetDC(desktopWindow);
+
+            var currentScreenIndex = 0;
+            var result = default(ScreenInfo);
+
+            PInvoke.EnumDisplayMonitors(hdc, (RECT*)null, (monitor, hdc, rectPointer, param) =>
+            {
+                var rect = *rectPointer;
+                var monitorInfo = default(MONITORINFO);
+                monitorInfo.cbSize = (uint)sizeof(MONITORINFO);
+
+                PInvoke.GetMonitorInfo(monitor, &monitorInfo);
+                PInvoke.GetDpiForMonitor(monitor, Windows.Win32.UI.HiDpi.MONITOR_DPI_TYPE.MDT_EFFECTIVE_DPI, out var dpiX, out var dpiY);
+
+                bool monitorIsPrimary = (monitorInfo.dwFlags & PInvoke.MONITORINFOF_PRIMARY) != 0;
+
+                result = new ScreenInfo(monitorIsPrimary, rect.X, rect.Y, rect.Width, rect.Height, (int)dpiX, (int)dpiY);
+
+                if (currentScreenIndex == index)
+                {
+                    return false;
+                }
+
+                currentScreenIndex++;
+                return true;
+            }, 0);
+
+            PInvoke.ReleaseDC(desktopWindow, hdc);
+
+            return result;
+        }
+
         public static unsafe ScreenInfo[] GetScreens()
         {
             var screenCount = GetScreenCount();

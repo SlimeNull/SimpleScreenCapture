@@ -6,6 +6,8 @@
         xmlns:local="clr-namespace:LibSimpleScreenCapture.Windows"
         xmlns:ws="https://schemas.elecho.dev/wpfsuite"
         mc:Ignorable="d"
+        WindowState="Maximized"
+        WindowStyle="None"
         Loaded="Window_Loaded"
         PreviewKeyDown="Window_PreviewKeyDown"
         Background="Black"
@@ -18,6 +20,8 @@
 
         <ws:SubtractNumberConverter Other="5" x:Key="Substract5Converter"/>
         <ws:AddNumberConverter Other="10" x:Key="Add10Converter"/>
+
+        <FontFamily x:Key="iconFont">Pack://application:,,,;/Assets/#Segoe Fluent Icons</FontFamily>
     </Window.Resources>
 
     <!--<Window.Background>
@@ -81,12 +85,6 @@
                               Width="{Binding AreaWidth}"
                               Height="{Binding AreaHeight}"/>
 
-            <FrameworkElement Name="toolbarPlacementTarget"
-                              Canvas.Left="{Binding ToolbarPlacementTargetLeft}"
-                              Canvas.Top="{Binding ToolbarPlacementTargetTop}"
-                              Width="{Binding ToolbarPlacementTargetWidth}"
-                              Height="{Binding ToolbarPlacementTargetHeight}"/>
-
             <FrameworkElement Name="mousePosition"
                               Canvas.Left="{Binding MouseX,Converter={StaticResource Substract5Converter}}"
                               Canvas.Top="{Binding MouseY,Converter={StaticResource Substract5Converter}}"
@@ -109,10 +107,11 @@
             </ws:Popup>-->
 
             <ws:Popup Name="toolbarPopup"
-                      PlacementTarget="{Binding ElementName=toolbarPlacementTarget}"
-                      Placement="Bottom"
+                      PlacementTarget="{Binding ElementName=captureArea}"
+                      Placement="Custom"
                       AutoReposition="True"
-                      IsOpen="{Binding AreaSelected}">
+                      IsOpen="{Binding AreaSelected}"
+                      CustomPopupPlacementCallback="{Binding ToolbarPopupPlacementCallback}">
 
                 <Border BorderThickness="1"
                         BorderBrush="#2080f0">
@@ -122,6 +121,7 @@
                                 <Setter Property="Width" Value="30"/>
                                 <Setter Property="Height" Value="30"/>
                                 <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="FontFamily" Value="{StaticResource iconFont}"/>
 
                                 <Setter Property="Background" Value="White"/>
                                 <Setter Property="HoverBackground" Value="#d4d4d4"/>
@@ -138,7 +138,7 @@
                         <ws:ToggleButton Content="Test"/>
                         <ws:ToggleButton Content="Test"/>
                         <ws:ToggleButton Content="Test"/>
-                        <ws:ToggleButton Content="Test"/>
+                        <ws:ToggleButton Content="&#xE8FB;"/>
                     </StackPanel>
                 </Border>
             </ws:Popup>
