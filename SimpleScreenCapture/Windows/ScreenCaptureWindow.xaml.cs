@@ -155,6 +155,11 @@ namespace LibSimpleScreenCapture.Windows
                     return Cursors.SizeNESW;
                 }
 
+                if (selectionMode == (AreaSelectionMode.ChangeX | AreaSelectionMode.ChangeY))
+                {
+                    return Cursors.Cross;
+                }
+
                 return Cursors.Arrow;
             }
         }
