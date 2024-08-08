@@ -11,12 +11,14 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LibScreenCapture;
+using Microsoft.Win32;
 using SkiaSharp;
 
 namespace LibSimpleScreenCapture.Windows
@@ -28,8 +30,9 @@ namespace LibSimpleScreenCapture.Windows
     public partial class ScreenCaptureWindow : Window
     {
         private readonly double _dpiScale;
-        private readonly Stream _destination;
         private readonly IScreenCapture _screenCapture;
+
+        private SaveFileDialog? _saveImageDialog;
 
         private Action<System.Windows.Controls.Primitives.Popup> repositionPopupAction = (Action<System.Windows.Controls.Primitives.Popup>)typeof(System.Windows.Controls.Primitives.Popup)
             .GetMethod("Reposition", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
@@ -37,21 +40,18 @@ namespace LibSimpleScreenCapture.Windows
 
         public WriteableBitmap ScreenBitmap { get; }
 
-        public ScreenCaptureWindow(System.IO.Stream destination)
+        public ScreenCaptureWindow()
         {
-            DataContext = this;
 
             _screenCapture = new GdiScreenCapture(0);
             _screenCapture.Capture();
 
-            var writeableBitmap = new WriteableBitmap(_screenCapture.ScreenWidth, _screenCapture.ScreenHeight, _screenCapture.DpiX, _screenCapture.DpiY, PixelFormats.Pbgra32, null);
-            writeableBitmap.WritePixels(new Int32Rect(0, 0, _screenCapture.ScreenWidth, _screenCapture.ScreenHeight), _screenCapture.DataPointer, _screenCapture.Stride * _screenCapture.ScreenHeight, _screenCapture.Stride);
+            var screenBitmap = new WriteableBitmap(_screenCapture.ScreenWidth, _screenCapture.ScreenHeight, _screenCapture.DpiX, _screenCapture.DpiY, PixelFormats.Pbgra32, null);
+            screenBitmap.WritePixels(new Int32Rect(0, 0, _screenCapture.ScreenWidth, _screenCapture.ScreenHeight), _screenCapture.DataPointer, _screenCapture.Stride * _screenCapture.ScreenHeight, _screenCapture.Stride);
+            screenBitmap.Freeze();
 
             var primaryScreen = ScreenInfo.GetScreen(0);
 
-            ScreenBitmap = writeableBitmap;
-            //ScreenBitmap.Freeze();
-            _destination = destination;
             _dpiScale = primaryScreen.DpiY / 96.0;
 
             ToolbarPopupPlacementCallback = (popupSize, targetSize, offset) =>
@@ -70,6 +70,9 @@ namespace LibSimpleScreenCapture.Windows
 
                 return [new CustomPopupPlacement(point, PopupPrimaryAxis.None)];
             };
+
+            DataContext = this;
+            ScreenBitmap = screenBitmap;
 
             InitializeComponent();
         }
@@ -196,8 +199,22 @@ namespace LibSimpleScreenCapture.Windows
             return selectionMode;
         }
 
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+
+            var presentationSource = (HwndSource)PresentationSource.FromVisual(this);
+            presentationSource.CompositionTarget.BackgroundColor = Colors.Black;
+        }
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            //WindowState = WindowState.Maximized;
+        }
+
+        private void Window_ContentRendered(object sender, EventArgs e)
+        {
+            WindowState = WindowState.Maximized;
         }
 
         private void AreaMouseDown(object sender, EventArgs e)
@@ -207,7 +224,9 @@ namespace LibSimpleScreenCapture.Windows
             if (!AreaSelected)
             {
                 _areaStartPosition = mousePosition;
+
                 SelectionMode = AreaSelectionMode.ChangeX | AreaSelectionMode.ChangeY;
+                AreaSelected = true;
             }
             else
             {
@@ -286,7 +305,6 @@ namespace LibSimpleScreenCapture.Windows
             if (SelectionMode != AreaSelectionMode.None)
             {
                 SelectionMode = AreaSelectionMode.None;
-                AreaSelected = true;
             }
 
             if (rootCanvas.IsMouseCaptured)
@@ -303,7 +321,11 @@ namespace LibSimpleScreenCapture.Windows
             }
             else if (e.Key is Key.Enter)
             {
-                AcceptCopyToClipboard();
+                AcceptAndCopyToClipboard();
+            }
+            else if (e.Key is Key.S && Keyboard.IsKeyDown(Key.LeftCtrl))
+            {
+                AcceptAndSaveToFile();
             }
         }
 
@@ -317,7 +339,67 @@ namespace LibSimpleScreenCapture.Windows
         }
 
         [RelayCommand]
-        public void AcceptCopyToClipboard()
+        public void AcceptAndSaveToFile()
+        {
+            var dateTime = DateTime.Now;
+
+            _saveImageDialog = _saveImageDialog ?? new SaveFileDialog()
+            {
+                Title = "Save Image",
+                CheckPathExists = true,
+                Filter = "PNG Image|*.png|JPEG Image|*.jpg;*.jpeg|WEBP Image|*.webp|BMP Image|*.bmp",
+            };
+
+            _saveImageDialog.FileName = $"ScreenCapture-{dateTime.Year}-{dateTime.Month}-{dateTime.Day}_{dateTime.Hour}-{dateTime.Minute}-{dateTime.Second}";
+
+            var dialogResult = _saveImageDialog.ShowDialog();
+            if (dialogResult is null or false)
+            {
+                return;
+            }
+
+            var normalizedAreaX = AreaLeft / rootCanvas.ActualWidth;
+            var normalizedAreaY = AreaTop / rootCanvas.ActualHeight;
+            var normalizedAreaWidth = AreaWidth / rootCanvas.ActualWidth;
+            var normalizedAreaHeight = AreaHeight / rootCanvas.ActualHeight;
+
+            var pixelAreaX = (int)(ScreenBitmap.PixelWidth * normalizedAreaX);
+            var pixelAreaY = (int)(ScreenBitmap.PixelHeight * normalizedAreaY);
+            var pixelAreaWidth = (int)(ScreenBitmap.PixelWidth * normalizedAreaWidth);
+            var pixelAreaHeight = (int)(ScreenBitmap.PixelHeight * normalizedAreaHeight);
+
+            using var screenImage = SKImage.FromPixels(new SKImageInfo(ScreenBitmap.PixelWidth, ScreenBitmap.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul), ScreenBitmap.BackBuffer, ScreenBitmap.BackBufferStride);
+            using var captureBitmap = new SKBitmap(pixelAreaWidth, pixelAreaHeight);
+            using var captureCanvas = new SKCanvas(captureBitmap);
+
+            captureCanvas.DrawImage(screenImage, new SKPoint(-pixelAreaX, -pixelAreaY));
+
+            try
+            {
+                using var fileStream = File.Create(_saveImageDialog.FileName);
+
+                var format = System.IO.Path.GetExtension(_saveImageDialog.FileName).ToUpper() switch
+                {
+                    ".PNG" => SKEncodedImageFormat.Png,
+                    ".BMP" => SKEncodedImageFormat.Bmp,
+                    ".WEBP" => SKEncodedImageFormat.Webp,
+                    ".JPEG" or ".JPG" => SKEncodedImageFormat.Jpeg,
+                    _ => SKEncodedImageFormat.Png,
+                };
+
+                captureBitmap.Encode(fileStream, format, 100);
+            }
+            catch
+            {
+                MessageBox.Show("Failed to save image", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            DialogResult = true;
+            Close();
+        }
+
+        [RelayCommand]
+        public void AcceptAndCopyToClipboard()
         {
             var normalizedAreaX = AreaLeft / rootCanvas.ActualWidth;
             var normalizedAreaY = AreaTop / rootCanvas.ActualHeight;
@@ -334,7 +416,11 @@ namespace LibSimpleScreenCapture.Windows
             using var captureCanvas = new SKCanvas(captureBitmap);
 
             captureCanvas.DrawImage(screenImage, new SKPoint(-pixelAreaX, -pixelAreaY));
-            captureBitmap.Encode(_destination, SKEncodedImageFormat.Png, 100);
+
+            WriteableBitmap toCopy = new WriteableBitmap(captureBitmap.Width, captureBitmap.Height, ScreenBitmap.DpiX, ScreenBitmap.DpiY, PixelFormats.Pbgra32, null);
+            toCopy.WritePixels(new Int32Rect(0, 0, toCopy.PixelWidth, toCopy.PixelHeight), captureBitmap.GetPixels(), captureBitmap.ByteCount, captureBitmap.RowBytes);
+
+            Clipboard.SetImage(toCopy);
 
             DialogResult = true;
             Close();

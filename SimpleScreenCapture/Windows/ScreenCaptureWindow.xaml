@@ -6,13 +6,15 @@
         xmlns:local="clr-namespace:LibSimpleScreenCapture.Windows"
         xmlns:ws="https://schemas.elecho.dev/wpfsuite"
         mc:Ignorable="d"
-        WindowState="Maximized"
+        WindowState="Minimized"
         WindowStyle="None"
         Loaded="Window_Loaded"
+        ContentRendered="Window_ContentRendered"
         PreviewKeyDown="Window_PreviewKeyDown"
         Background="Black"
         Title="ScreenCaptureWindow" Height="450" Width="800"
         d:DataContext="{d:DesignInstance Type=local:ScreenCaptureWindow}">
+
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <ws:SubtractNumberConverter Other="2" x:Key="Substract2Converter"/>
@@ -23,10 +25,6 @@
 
         <FontFamily x:Key="iconFont">Pack://application:,,,;/Assets/#Segoe Fluent Icons</FontFamily>
     </Window.Resources>
-
-    <!--<Window.Background>
-        
-    </Window.Background>-->
 
     <Grid>
         <Image Source="{Binding ScreenBitmap}"/>
@@ -51,6 +49,7 @@
                        Canvas.Top="0"
                        Width="{Binding AreaLeft}"
                        Height="{Binding ElementName=rootCanvas,Path=ActualHeight}"
+                       Visibility="{Binding AreaSelected,Converter={StaticResource BooleanToVisibilityConverter}}"
                        d:Width="100"
                        d:Height="100"
                        Fill="#88000000"/>
@@ -58,6 +57,7 @@
                        Canvas.Top="0"
                        Width="{Binding AreaRight}"
                        Height="{Binding ElementName=rootCanvas,Path=ActualHeight}"
+                       Visibility="{Binding AreaSelected,Converter={StaticResource BooleanToVisibilityConverter}}"
                        d:Width="100"
                        d:Height="100"
                        Fill="#88000000"/>
@@ -65,17 +65,20 @@
                        Canvas.Left="{Binding AreaLeft}"
                        Width="{Binding AreaWidth}"
                        Height="{Binding AreaTop}"
+                       Visibility="{Binding AreaSelected,Converter={StaticResource BooleanToVisibilityConverter}}"
                        Fill="#88000000"/>
             <Rectangle Canvas.Bottom="0"
                        Canvas.Left="{Binding AreaLeft}"
                        Width="{Binding AreaWidth}"
                        Height="{Binding AreaBottom}"
+                       Visibility="{Binding AreaSelected,Converter={StaticResource BooleanToVisibilityConverter}}"
                        Fill="#88000000"/>
 
             <Border Canvas.Left="{Binding AreaLeft,Converter={StaticResource Substract2Converter}}"
                     Canvas.Top="{Binding AreaTop,Converter={StaticResource Substract2Converter}}"
                     Width="{Binding AreaWidth,Converter={StaticResource Add4Converter}}"
                     Height="{Binding AreaHeight,Converter={StaticResource Add4Converter}}"
+                    Visibility="{Binding AreaSelected,Converter={StaticResource BooleanToVisibilityConverter}}"
                     BorderThickness="2"
                     BorderBrush="#2080f0"/>
 
@@ -92,18 +95,18 @@
                               Height="10"/>
 
             <!--<ws:Popup Name="followMousePopup"
-                      AllowsTransparency="True"
-                      PlacementTarget="{Binding ElementName=mousePosition}"
-                      Placement="Bottom"
-                      AutoReposition="True"
-                      IsOpen="True"
-                      PreviewMouseMove="followMousePopup_PreviewMouseMove">
-                <Border BorderThickness="2"
-                        BorderBrush="#2080f0"
-                        Width="100"
-                        Height="100">
+            AllowsTransparency="True"
+            PlacementTarget="{Binding ElementName=mousePosition}"
+            Placement="Bottom"
+            AutoReposition="True"
+            IsOpen="True"
+            PreviewMouseMove="followMousePopup_PreviewMouseMove">
+            <Border BorderThickness="2"
+            BorderBrush="#2080f0"
+            Width="100"
+            Height="100">
 
-                </Border>
+            </Border>
             </ws:Popup>-->
 
             <ws:Popup Name="toolbarPopup"
@@ -138,7 +141,9 @@
                         <ws:ToggleButton Content="Test"/>
                         <ws:ToggleButton Content="Test"/>
                         <ws:ToggleButton Content="Test"/>
-                        <ws:ToggleButton Content="&#xE8FB;"/>
+                        <ws:ToggleButton>
+                            <TextBlock FontFamily="{StaticResource iconFont}" Text="&#xE8FB;"/>
+                        </ws:ToggleButton>
                     </StackPanel>
                 </Border>
             </ws:Popup>

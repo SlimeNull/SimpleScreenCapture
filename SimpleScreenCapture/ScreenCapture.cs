@@ -10,9 +10,9 @@ namespace LibSimpleScreenCapture
 {
     public static class ScreenCapture
     {
-        public static bool DoScreenCapture(Stream destination)
+        public static bool DoScreenCapture()
         {
-            var screenCaptureWindow = new ScreenCaptureWindow(destination);
+            var screenCaptureWindow = new ScreenCaptureWindow();
             screenCaptureWindow.ShowDialog();
 
             return screenCaptureWindow.DialogResult ?? false;
