@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\Segoe Fluent Icons.ttf" />
+    <Resource Include="Assets\**\*" />
   </ItemGroup>
 
 </Project>
